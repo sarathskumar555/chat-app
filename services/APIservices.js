@@ -15,8 +15,10 @@ headers;
     }
     post = async ({ body, api }) => {
         return new Promise((resolve, reject) => {
+          
             axios.post(`${this.url}${api}`, body).
                 then((res) => {
+                   
                     const { headers, data } = res
                     if (headers.authorization != 'true') {
                         this.authService.clearSession();
@@ -27,6 +29,7 @@ headers;
                     }
                     resolve(data)
                 }).catch((err) => {
+                   
                     reject(err)
 
                 })
@@ -57,6 +60,7 @@ headers;
     }
     get(api, { refreshToken, accessToken }) {
         return new Promise((resolve, reject) => {
+     
             const{access,refresh}=this.headers
             const url = this.baseURL
             axios.get(api, {
@@ -97,6 +101,40 @@ headers;
         })
 
     }
+   chatPost = async ({ body, api }) => {
+        return new Promise((resolve, reject) => {
+
+            axios.post(`${this.url}${api}`, body).
+                then((res) => {
+               
+                    resolve(res.data)
+                }).catch((err) => {
+                   // console.log(err)
+                    reject(err)
+
+                })
+        })
+
+    }
+    // chatget(api, { refreshToken, accessToken }) {
+    //     return new Promise((resolve, reject) => {
+    //         console.log("sarath",api)
+    //         axios.get(api, {
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'x-access-token': accessToken,
+    //                 'refresh-token': refreshToken
+    //             }
+    //         })
+    //             .then((response) => {
+    //                 console.log("sarath")
+    //                 resolve(response.data)
+    //             }, (err) => {
+    //                 console.log("err",err)
+    //                 reject(err)
+    //             })
+    //     })
+    // }
 
 
 

@@ -10,7 +10,7 @@ class AuthServices {
     getAuth = () => {
        const access = Cookies.get('accessToken')
       const  refresh = Cookies.get('refreshToken')
-      console.log(access,refresh,"ggggg")
+    //   console.log(access,refresh,"ggggg")
         if (access && refresh) {
             return {
                 access,

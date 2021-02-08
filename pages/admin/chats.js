@@ -20,7 +20,8 @@ import APIservices from '../../services/APIservices'
 import Router from "next/router";
 import * as cookie from 'cookie'
 import jwt_decode from "jwt-decode";
-
+import moment from 'moment'
+import { get } from 'js-cookie';
 
 const useStyles = makeStyles({
     table: {
@@ -47,142 +48,108 @@ const { access, refresh } = authService.getAuth()
 const socket = openSocket.connect('http://localhost:3500', {
     query: { access, refresh }
 })
-// console.log(access,"accessss")
-// var token = `"${access}"` 
-// var decoded = jwt_decode(token);
-
-// console.log(decoded,"kkk");
-
-const Chat = ({ }) => {
-    //     let s=1
-    //     const classes = useStyles();
-    //     const [message, setMessage] = useState('')
-    //     const[flags,setflag]=useState(true)
-    //     const[data,setData]=useState([])
-    //     const[intial,setIntialId]=useState([])
-
-
-    //     useEffect(() => {
-    //         socket.on('message1', (m) => {
-    //            setData([...data,m])
-
-    //             console.log(m,"result")
-    //         })
 
 
 
-    //     }, [data])
-    //     // useEffect(()=>{
-    //     //     socket.on('message', result => {
-    //     //         setIntialId([...intial,result.uid])
-    //     //     })
-    //     // },[intial])
-
-    //     const inputMessage = (e) => {
-    //         setMessage(e.target.value)
-    //     }
-
-    //     const sendMessage = () => {
-    //         socket.emit('sendMessage', message, (message) => {
-    //             console.log(message)
-    //         })
-    //         setMessage('')
-
-
-    //     }
-    // console.log("welocome",intial)
-
-
-
+const Chat = () => {
     const classes = useStyles();
     const [message, setMessage] = useState('')
     const [disable, setDisable] = useState(false)
     const [user, setUser] = useState('')
-    const [data, setData] = useState([])
-    const [list, setList] = useState([])
-    const[id,setId]=useState()
+    const [allUser, setAllUser] = useState([])
+    const [online, setOnline] = useState([])
+    const [newMessage, setNewMessage] = useState([])
+    const [getsender, setGetSender] = useState('')
+    const [profile, setProfile] = useState('')
+    const [chat, setChat] = useState([])
+    const[flag,setFlag]=useState(false)
+    const[currentRoom,setRoom]=useState(null)
 
     const inputMessage = (e) => {
         setMessage(e.target.value)
     }
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
 
-        setDisable(true)
-        console.log("data", data)
-        socket.emit('sendMessage', {uid:id,message}, (message) => {
-            setDisable(false)
-            setMessage('')
-            console.log(message)
+
+        const obj = {
+            fromUID: user,
+            toUID: getsender,
+            message,
+            roomID:currentRoom
+
+        }
+
+        console.log(obj,"kkkkk")
+    
+        // const list = new APIservices()
+        // const api = `/user/userChat/`
+        // const result = await list.chatPost({ body: obj, api })
+        socket.emit("message", (obj), () => {
+        
         })
+        // setChat(chat => [...chat, obj])
+        setMessage('')
+
+
     }
+
 
     useEffect(() => {
-        socket.on('message', (m) => {
-            // console.log(socket.id, "client")
-            // if (m.message !== "welocome")
-            //     setData(data => [...data, m])
-            if (m.message === "welocome") {
-                setUser(m.uid)
-
-
-            }
-
+        socket.on("uid", (user_uid) => {
+            setUser(user_uid)
         })
-
-        socket.on("delivered", (data) => {
-            setData(data => [...data, m])
-            console.log("getettete", data)
+        console.log('=>>>>>>>>>>>>>>>>>>',socket);
+     
+        socket.on("chat", (obj) => {
+            console.log("hacked", obj)
+            // const list = new APIservices()
+            // const api = `/user/userChat/`
+            // const result =  list.chatPost({ body: obj, api })
+            setChat(chat => [...chat, obj])
         })
-
-        console.log(user, "sarath")
+        const accessToken = access
+        const refreshToken = refresh
         const list = new APIservices()
-        const api = `${process.env.baseUrl}/user/userCrud/${user}`
-        list.get(api, { refreshToken: refresh, accessToken: access }).then((employeeList) => {
+        const api = `${process.env.baseUrl}/user/userCrud`
+        list.get(api, { refreshToken: refresh, accessToken: access }).then((res) => {
 
-            const data = employeeList.data
+            setAllUser(res.data)
 
-            setList(data)
+
         })
+    }, [])
 
+    const getData = async (e) => {
+        setGetSender(e.target.alt)
+   setFlag(true)
+        const accessToken = access
+        const refreshToken = refresh
 
+        const list = new APIservices()
+        const api = `${process.env.baseUrl}/user/userCrud/${e.target.alt}`
+        list.get(api, { refreshToken: refresh, accessToken: access }).then((res) => {
+            setProfile(res.data)
+        }).catch((err) => {
+            console.log(err)
+        })
+        list.get(`${process.env.baseUrl}/user/userChat/?fromUID=${user}&toUID=${e.target.alt}`, { refreshToken: refresh, accessToken: access }).then((res) => {
+            let arr = []
+            console.log(res, "response")
+            setRoom(res.data.room)
+            res.data.map((res) => {
+               
+                if ((res.fromUID === user && res.toUID ===e.target.alt)||(res.toUID===user&&res.fromUID===e.target.alt))
+                    arr.push(res)
+            })
+          
+            setChat(arr)
 
+        }).catch((err) => {
 
-
-
-
-    }, [data])
-
-    // (function () {
-    //     /* */
-    // })()
-
-    // ( data= async () => {
-
-
-    //     const list = new APIservices()
-    //     const api = `${process.env.baseUrl}/user/userCrud/${user}`
-    //     list.get(api, { refreshToken: refresh, accessToken: access }).then((employeeList) => {
-
-    //         const data = employeeList.data
-
-    //         setList(data)
-    //     })
-
-
-    // })()
-
-
-
-
-    const fetch = async (e) => {
-    
-        setId(e.target.alt)
-
-        console.log(id,"jjjjj")
+        })
+  socket.emit('toUID',(e.target.alt))
     }
-
-
 
 
     return (
@@ -191,27 +158,23 @@ const Chat = ({ }) => {
                 <Grid item xs={3} className={classes.borderRight500}>
                     <List>
                         {
-                            list.map(ele => (
-                                ele.uid === user ? <ListItem button key={ele.email} >
-                                    <ListItemIcon>
-
-                                        <Avatar alt={ele.email} src={ele.profilePicture} />
-
-
-                                    </ListItemIcon>
-                                    <ListItemText primary={ele.firstName}>{ele.firstName} {ele.lastName}</ListItemText>
-                                </ListItem> : " "
-                            ))
+                            profile ? <ListItem button key={profile.uid} >
+                                <ListItemIcon>
+                                    <Avatar alt={profile.email} src={profile.profilePicture} />
+                                </ListItemIcon>
+                                <ListItemText primary={profile.firstName}>{profile.firstName}</ListItemText>
+                            </ListItem> : " "
                         }
                     </List>
-
+                    <Divider />
                     <Grid item xs={12} style={{ padding: '10px' }}>
+                        <TextField id="outlined-basic-email" label="Search" variant="outlined" fullWidth />
                     </Grid>
+                    <Divider />
                     <List>
-                        {list.map(ele => (
-                            <ListItem button key={ele.uid}
-                                primaryText={ele.uid}  >
-                                <ListItemIcon onClick={(event) => { event.persist(); fetch(event) }}  >
+                        {allUser.map(ele => (
+                            <ListItem button key={ele.uid} primaryText={ele.uid}>
+                                <ListItemIcon onClick={(event) => { event.persist(); getData(event) }}  >
                                     <Avatar alt={ele.uid} src={ele.profilePicture} />
                                 </ListItemIcon>
                                 <ListItemText primary={ele.firstName}>{ele.firstName} {ele.lastName}</ListItemText>
@@ -221,18 +184,16 @@ const Chat = ({ }) => {
                 </Grid>
                 <Grid item xs={9}>
                     <List className={classes.messageArea}>
-                        {data.map(e => (
-                            <ListItem key="1">
-                                <Grid container>
-                                    <Grid item xs={12}>
-                                        <ListItemText align={e.uid == user ? "right" : "left"} primary={e.message} secondary={e.time}></ListItemText>
-                                    </Grid>
-                                    <Grid item xs={12}>
-
-                                    </Grid>
+                        { flag===true ?chat.map(ele => (<ListItem button key={ele.createdAt} >
+                            <Grid container>
+                                <Grid item xs={12}>
+                                    <ListItemText align={ele.fromUID == user ? "left" : "right"} primary={ele.message}></ListItemText>
                                 </Grid>
-                            </ListItem>
-                        ))}
+                                <Grid item xs={12}>
+
+                                </Grid>
+                            </Grid>
+                        </ListItem>)):""}
                     </List>
                     <Divider />
                     <Grid container style={{ padding: '9px' }}>
@@ -249,19 +210,8 @@ const Chat = ({ }) => {
     )
 }
 
-
 Chat.layout = Admin;
 export default Chat;
-
-
-
-
-
-
-
-
-
-
 
 
 
